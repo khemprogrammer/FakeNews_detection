@@ -1,0 +1,175 @@
+/* Base layout */
+:root {
+  --bg: #0f172a; /* slate-900 */
+  --panel: #111827; /* gray-900 */
+  --panel-2: #0b1220;
+  --text: #e5e7eb; /* gray-200 */
+  --muted: #94a3b8; /* slate-400 */
+  --primary: #2563eb; /* blue-600 */
+  --primary-600: #1d4ed8;
+  --success: #10b981; /* emerald-500 */
+  --danger: #ef4444; /* red-500 */
+  --border: #1f2937; /* gray-800 */
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: radial-gradient(1200px 600px at 20% -10%, rgba(37,99,235,.25), transparent 60%),
+              radial-gradient(800px 400px at 110% 0%, rgba(16,185,129,.15), transparent 50%),
+              var(--bg);
+  color: var(--text);
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.site-header {
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.0));
+}
+.site-header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+}
+.brand {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: 0.3px;
+}
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.username {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.logout-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(239,68,68,0.1);
+  color: #f87171;
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+.logout-btn:hover {
+  background: rgba(239,68,68,0.2);
+  border-color: rgba(239,68,68,0.5);
+}
+
+.site-footer {
+  margin-top: 2rem;
+  border-top: 1px solid var(--border);
+  background: linear-gradient(0deg, rgba(255,255,255,0.03), rgba(255,255,255,0.0));
+}
+
+/* Card */
+.card {
+  margin-top: 1.5rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.card-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+}
+.muted { color: var(--muted); font-size: 0.95rem; }
+
+/* Fields */
+.field-label {
+  display: block;
+  margin: 1rem 0 0.5rem 0;
+  font-weight: 600;
+  color: var(--muted);
+}
+.input {
+  width: 100%;
+  min-height: 160px;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+}
+.input:focus { border-color: rgba(37,99,235,.6); box-shadow: 0 0 0 3px rgba(37,99,235,.2); }
+
+.controls {
+  margin-top: 1rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.select-wrap { flex: 1 1 260px; }
+.select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+}
+
+/* Buttons */
+.btn {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .05s ease, background .2s ease;
+}
+.btn.primary {
+  background: linear-gradient(180deg, var(--primary), var(--primary-600));
+  color: white;
+}
+.btn.primary:hover { filter: brightness(1.05); }
+.btn:active { transform: translateY(1px); }
+
+/* Results */
+.result { margin-top: 1rem; }
+.result-grid {
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+.metric {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.badge {
+  display: inline-block;
+  padding: 0.35rem 0.6rem;
+  font-weight: 700;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.badge.success { background: rgba(16,185,129,0.1); color: #34d399; }
+.badge.danger { background: rgba(239,68,68,0.12); color: #f87171; }
+
+/* Responsive */
+@media (max-width: 480px) {
+  .brand { font-size: 1.25rem; }
+  .card { padding: 1rem; }
+}
+
+
+

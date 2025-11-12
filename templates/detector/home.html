@@ -1,0 +1,106 @@
+{% load static %}
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fake News Detection</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <h1 class="brand">Fake News Detection</h1>
+        <div class="user-menu">
+          <span class="username">Welcome, {{ user.username }}!</span>
+          <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+        </div>
+      </div>
+    </header>
+    <main class="container">
+      <section class="card">
+        <h2 class="card-title">Analyze News Text</h2>
+        <p class="muted">Paste a news paragraph and choose a model to evaluate it.</p>
+        <label class="field-label" for="text">Text</label>
+        <textarea class="input" id="text" placeholder="Paste news text here..."></textarea>
+        <div class="controls">
+          <div class="select-wrap">
+            <label class="field-label" for="model">Model</label>
+            <select class="select" id="model">
+              <option value="best">Best (default)</option>
+              <option value="nb">Naïve Bayes</option>
+              <option value="rf">Random Forest</option>
+              <option value="svm">SVM</option>
+              <option value="lstm">LSTM</option>
+              <option value="bert">BERT</option>
+            </select>
+          </div>
+          <button class="btn primary" id="predict">Predict</button>
+        </div>
+        <div class="result" id="result"></div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span class="muted">© 2025 Fakenews_detection.all rights reserved.</span>
+      </div>
+    </footer>
+
+    <script>
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+      }
+      document.getElementById('predict').addEventListener('click', async () => {
+        const btn = document.getElementById('predict');
+        const text = document.getElementById('text').value.trim();
+        const model = document.getElementById('model').value;
+        const resultEl = document.getElementById('result');
+        if (!text) { resultEl.textContent = 'Please enter some text.'; return; }
+        btn.disabled = true;
+        btn.textContent = 'Predicting...';
+        resultEl.textContent = 'Predicting...';
+        try {
+          const res = await fetch('/api/predict/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCookie('csrftoken') || ''
+            },
+            body: JSON.stringify({ text, model })
+          });
+          let data;
+          try { data = await res.json(); } catch (e) { data = { error: 'Invalid JSON response' }; }
+          if (!res.ok) {
+            resultEl.textContent = 'Error: ' + (data && data.error ? data.error : res.status + ' ' + res.statusText);
+          } else if (data.error) {
+            resultEl.innerHTML = `<div style="color: var(--danger);">Error: ${data.error}</div>`;
+          } else if (data.label === 'unknown' || data.label === 'error' || !data.label) {
+            const errMsg = data.error || 'Unable to make prediction. Please ensure models are trained.';
+            resultEl.innerHTML = `<div style="color: var(--danger);">Error: ${errMsg}</div>`;
+          } else {
+            const labelClass = data.label === 'fake' ? 'badge danger' : 'badge success';
+            const labelText = (data.label || 'unknown').toString().toUpperCase();
+            const scorePct = ((data.score || 0) * 100).toFixed(1);
+            const modelText = (data.model || 'unknown').toString().toUpperCase();
+            resultEl.innerHTML = `
+              <div class="result-grid">
+                <div><span class="muted">Predicted label</span><div class="${labelClass}">${labelText}</div></div>
+                <div><span class="muted">Confidence</span><div class="metric">${scorePct}%</div></div>
+                <div><span class="muted">Model</span><div class="metric">${modelText}</div></div>
+              </div>
+            `;
+          }
+        } catch (err) {
+          resultEl.textContent = 'Network error. Please try again.';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Predict';
+        }
+      });
+    </script>
+  </body>
+  </html>
+
+

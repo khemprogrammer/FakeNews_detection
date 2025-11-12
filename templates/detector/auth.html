@@ -1,0 +1,171 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / Signup - Fake News Detection</title>
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-wrapper" id="authWrapper">
+            <!-- Login Form -->
+            <div class="auth-form login-form" id="loginForm">
+                <div class="form-header">
+                    <h1>Welcome Back</h1>
+                    <p>Sign in to continue to Fake News Detection</p>
+                </div>
+                <form id="loginFormElement" method="post" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="login-username">Username</label>
+                        <input type="text" id="login-username" name="username" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" name="password" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn-primary">Sign In</button>
+                    <div class="form-footer">
+                        <p>Don't have an account? <a href="#" id="switchToSignup">Sign up</a></p>
+                    </div>
+                    <div class="error-message" id="loginError"></div>
+                </form>
+            </div>
+
+            <!-- Signup Form -->
+            <div class="auth-form signup-form" id="signupForm">
+                <div class="form-header">
+                    <h1>Create Account</h1>
+                    <p>Sign up to start detecting fake news</p>
+                </div>
+                <form id="signupFormElement" method="post" action="{% url 'signup' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="signup-username">Username</label>
+                        <input type="text" id="signup-username" name="username" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email</label>
+                        <input type="email" id="signup-email" name="email" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" name="password" required autocomplete="new-password" minlength="8">
+                        <small>Must be at least 8 characters</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password-confirm">Confirm Password</label>
+                        <input type="password" id="signup-password-confirm" name="password_confirm" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn-primary">Sign Up</button>
+                    <div class="form-footer">
+                        <p>Already have an account? <a href="#" id="switchToLogin">Sign in</a></p>
+                    </div>
+                    <div class="error-message" id="signupError"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const authWrapper = document.getElementById('authWrapper');
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const switchToSignup = document.getElementById('switchToSignup');
+        const switchToLogin = document.getElementById('switchToLogin');
+        const loginFormElement = document.getElementById('loginFormElement');
+        const signupFormElement = document.getElementById('signupFormElement');
+        const loginError = document.getElementById('loginError');
+        const signupError = document.getElementById('signupError');
+
+        // Switch to signup
+        switchToSignup.addEventListener('click', (e) => {
+            e.preventDefault();
+            authWrapper.classList.add('show-signup');
+            loginError.textContent = '';
+        });
+
+        // Switch to login
+        switchToLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            authWrapper.classList.remove('show-signup');
+            signupError.textContent = '';
+        });
+
+        // Handle login form submission
+        loginFormElement.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            loginError.textContent = '';
+            
+            const formData = new FormData(loginFormElement);
+            const username = formData.get('username');
+            const password = formData.get('password');
+
+            if (!username || !password) {
+                loginError.textContent = 'Please fill in all fields';
+                return;
+            }
+
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+                const response = await fetch('{% url "login" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    loginError.textContent = data.error || 'Login failed. Please try again.';
+                }
+            } catch (error) {
+                loginError.textContent = 'Network error. Please try again.';
+            }
+        });
+
+        // Handle signup form submission
+        signupFormElement.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            signupError.textContent = '';
+            
+            const formData = new FormData(signupFormElement);
+            const password = formData.get('password');
+            const passwordConfirm = formData.get('password_confirm');
+
+            if (password !== passwordConfirm) {
+                signupError.textContent = 'Passwords do not match';
+                return;
+            }
+
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+                const response = await fetch('{% url "signup" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    signupError.textContent = data.error || 'Signup failed. Please try again.';
+                }
+            } catch (error) {
+                signupError.textContent = 'Network error. Please try again.';
+            }
+        });
+    </script>
+</body>
+</html>
+

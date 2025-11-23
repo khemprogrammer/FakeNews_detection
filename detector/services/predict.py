@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+_PREDICTOR: Predictor | None = None
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict
@@ -23,6 +25,10 @@ def _load_joblib(path: Path):
 
 
 def load_predictor() -> Predictor:
+    global _PREDICTOR
+    if _PREDICTOR is not None:
+        return _PREDICTOR
+
     models_dir = Path(settings.MODELS_DIR)
     models_dir.mkdir(parents=True, exist_ok=True)
 
@@ -33,81 +39,13 @@ def load_predictor() -> Predictor:
         if obj is not None:
             ml_models[name] = obj
 
-    # Lazy imports for heavy deps
     lstm_model = None
     lstm_tokenizer_data = None
-    try:
-        from tensorflow import keras  # type: ignore
-        lstm_path = models_dir / 'lstm_model.keras'
-        tokenizer_path = models_dir / 'lstm_tokenizer.joblib'
-        if lstm_path.exists():
-            lstm_model = keras.models.load_model(lstm_path)
-            if tokenizer_path.exists():
-                lstm_tokenizer_data = joblib.load(tokenizer_path)
-    except Exception:
-        lstm_model = None
-        lstm_tokenizer_data = None
 
     bert_tokenizer = None
     bert_model = None
-    try:
-        # Workaround for regex circular import: import regex first using importlib
-        import sys
-        import importlib.util
-        
-        # Try to import regex in a way that avoids circular imports
-        if 'regex' not in sys.modules:
-            try:
-                spec = importlib.util.find_spec('regex')
-                if spec and spec.loader:
-                    importlib.util.module_from_spec(spec)
-            except Exception:
-                pass
-        
-        # Now try importing transformers
-        from transformers import AutoTokenizer, TFAutoModelForSequenceClassification  # type: ignore
-        bert_dir = models_dir / 'bert'
-        if (bert_dir / 'config.json').exists():
-            bert_tokenizer = AutoTokenizer.from_pretrained(bert_dir.as_posix())
-            bert_model = TFAutoModelForSequenceClassification.from_pretrained(bert_dir.as_posix())
-    except ImportError as e:
-        error_msg = str(e).lower()
-        if 'regex' in error_msg or '_regex' in error_msg:
-            # Regex circular import issue - try one more time with a clean import
-            import traceback
-            try:
-                # Clear any partial regex imports
-                modules_to_remove = [k for k in sys.modules.keys() if 'regex' in k.lower()]
-                for mod in modules_to_remove:
-                    del sys.modules[mod]
-                
-                # Force fresh import
-                import regex  # noqa: F401
-                from transformers import AutoTokenizer, TFAutoModelForSequenceClassification  # type: ignore
-                bert_dir = models_dir / 'bert'
-                if (bert_dir / 'config.json').exists():
-                    bert_tokenizer = AutoTokenizer.from_pretrained(bert_dir.as_posix())
-                    bert_model = TFAutoModelForSequenceClassification.from_pretrained(bert_dir.as_posix())
-            except Exception as retry_error:
-                print("=" * 60)
-                print("ERROR: Regex circular import - BERT model will not be available")
-                print("This is a known issue. To fix, restart your Django server after running:")
-                print("  .venv\\Scripts\\python.exe -m pip uninstall regex -y")
-                print("  .venv\\Scripts\\python.exe -m pip install regex")
-                print("=" * 60)
-                bert_tokenizer = None
-                bert_model = None
-        else:
-            bert_tokenizer = None
-            bert_model = None
-    except Exception as e:
-        import traceback
-        print(f"Warning: Could not load BERT model: {e}")
-        traceback.print_exc()
-        bert_tokenizer = None
-        bert_model = None
 
-    return Predictor(
+    _PREDICTOR = Predictor(
         tfidf_vectorizer=tfidf,
         ml_models=ml_models,
         lstm_model=lstm_model,
@@ -115,6 +53,7 @@ def load_predictor() -> Predictor:
         bert_tokenizer=bert_tokenizer,
         bert_model=bert_model,
     )
+    return _PREDICTOR
 
 
 def predict_text(predictor: Predictor, text: str, model_name: str = 'best') -> Dict[str, Any]:
@@ -123,33 +62,58 @@ def predict_text(predictor: Predictor, text: str, model_name: str = 'best') -> D
         return {'label': 'error', 'score': 0.0, 'model': 'none', 'error': 'Empty text provided'}
     
     # Prefer BERT if requested and available
-    if model_name.lower() == 'bert' and predictor.bert_model and predictor.bert_tokenizer:
+    if model_name.lower() == 'bert':
+        if not (predictor.bert_model and predictor.bert_tokenizer):
+            try:
+                import sys
+                import importlib.util
+                from transformers import AutoTokenizer, TFAutoModelForSequenceClassification  # type: ignore
+                models_dir = Path(settings.MODELS_DIR)
+                bert_dir = models_dir / 'bert'
+                if (bert_dir / 'config.json').exists():
+                    predictor.bert_tokenizer = AutoTokenizer.from_pretrained(bert_dir.as_posix())
+                    predictor.bert_model = TFAutoModelForSequenceClassification.from_pretrained(bert_dir.as_posix())
+            except Exception as e:
+                return {'label': 'error', 'score': 0.0, 'model': 'bert', 'error': f'BERT load failed: {str(e)}'}
         try:
-        import tensorflow as tf  # type: ignore
-        inputs = predictor.bert_tokenizer(text, return_tensors='tf', truncation=True, padding=True)
-        outputs = predictor.bert_model(inputs)
-        probs = tf.nn.softmax(outputs.logits, axis=-1).numpy()[0]
-        label_idx = int(probs.argmax())
-        label = 'fake' if label_idx == 1 else 'real'
-        return {'label': label, 'score': float(probs[label_idx]), 'model': 'bert'}
+            import tensorflow as tf  # type: ignore
+            inputs = predictor.bert_tokenizer(text, return_tensors='tf', truncation=True, padding=True)
+            outputs = predictor.bert_model(inputs)
+            probs = tf.nn.softmax(outputs.logits, axis=-1).numpy()[0]
+            label_idx = int(probs.argmax())
+            label = 'fake' if label_idx == 1 else 'real'
+            return {'label': label, 'score': float(probs[label_idx]), 'model': 'bert'}
         except Exception as e:
             return {'label': 'error', 'score': 0.0, 'model': 'bert', 'error': f'BERT prediction failed: {str(e)}'}
 
     # LSTM path
-    if model_name.lower() == 'lstm' and predictor.lstm_model and predictor.lstm_tokenizer_data:
-        try:
-            from tensorflow import keras  # type: ignore
-            import numpy as np  # type: ignore
-            tokenizer = predictor.lstm_tokenizer_data['tokenizer']
-            max_len = predictor.lstm_tokenizer_data['max_len']
-            seq = tokenizer.texts_to_sequences([text])
-            padded = keras.utils.pad_sequences(seq, maxlen=max_len)
-            pred = predictor.lstm_model.predict(padded, verbose=0)[0][0]
-            score = float(pred)
-            label = 'fake' if score >= 0.5 else 'real'
-            return {'label': label, 'score': max(score, 1.0 - score), 'model': 'lstm'}
-        except Exception as e:
-            return {'label': 'error', 'score': 0.0, 'model': 'lstm', 'error': str(e)}
+    if model_name.lower() == 'lstm':
+        if not (predictor.lstm_model and predictor.lstm_tokenizer_data):
+            try:
+                from tensorflow import keras  # type: ignore
+                models_dir = Path(settings.MODELS_DIR)
+                lstm_path = models_dir / 'lstm_model.keras'
+                tokenizer_path = models_dir / 'lstm_tokenizer.joblib'
+                if lstm_path.exists():
+                    predictor.lstm_model = keras.models.load_model(lstm_path)
+                    if tokenizer_path.exists():
+                        predictor.lstm_tokenizer_data = joblib.load(tokenizer_path)
+            except Exception as e:
+                return {'label': 'error', 'score': 0.0, 'model': 'lstm', 'error': f'LSTM load failed: {str(e)}'}
+        if predictor.lstm_model and predictor.lstm_tokenizer_data:
+            try:
+                from tensorflow import keras  # type: ignore
+                import numpy as np  # type: ignore
+                tokenizer = predictor.lstm_tokenizer_data['tokenizer']
+                max_len = predictor.lstm_tokenizer_data['max_len']
+                seq = tokenizer.texts_to_sequences([text])
+                padded = keras.utils.pad_sequences(seq, maxlen=max_len)
+                pred = predictor.lstm_model.predict(padded, verbose=0)[0][0]
+                score = float(pred)
+                label = 'fake' if score >= 0.5 else 'real'
+                return {'label': label, 'score': max(score, 1.0 - score), 'model': 'lstm'}
+            except Exception as e:
+                return {'label': 'error', 'score': 0.0, 'model': 'lstm', 'error': str(e)}
 
     # If LSTM explicitly requested but unavailable, return a targeted error
     if model_name.lower() == 'lstm' and not (predictor.lstm_model and predictor.lstm_tokenizer_data):

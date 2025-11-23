@@ -378,3 +378,31 @@ Americans are more concerned over Indians fake open source contribution,rf,fake,
 Americans are more concerned over Indians fake open source contribution,svm,fake,0.9686212198951225
 Americans are more concerned over Indians fake open source contribution,lstm,fake,0.9998654127120972
 Americans are more concerned over Indians fake open source contribution,bert,fake,0.6637450456619263
+Americans are more concerned over Indians fake open source contribution,best,fake,0.89
+Americans are more concerned over Indians fake open source contribution,bert,fake,0.6637450456619263
+Americans are more concerned over Indians fake open source contribution,lstm,fake,0.9998654127120972
+Americans are more concerned over Indians fake open source contribution,best,fake,0.89
+Americans are more concerned over Indians fake open source contribution,lstm,fake,0.9998654127120972
+Americans are more concerned over Indians fake open source contribution,bert,fake,0.6637450456619263
+Americans are more concerned over Indians fake open source contribution,nb,fake,0.594937821077651
+Americans are more concerned over Indians fake open source contribution,best,fake,0.89
+Americans are more concerned over Indians fake open source contribution,rf,fake,0.89
+Trump administration issues new rules on U.S. visa waivers,best,fake,0.83
+Trump administration issues new rules on U.S. visa waivers,rf,fake,0.83
+Trump administration issues new rules on U.S. visa waivers,bert,real,0.5743719339370728
+Trump administration issues new rules on U.S. visa waivers,lstm,fake,0.9560225605964661
+Trump administration issues new rules on U.S. visa waivers,nb,real,0.6163718664246818
+Americans are more concerned over Indians fake open source contribution,best,fake,0.89
+Americans are more concerned over Indians fake open source contribution,lstm,fake,0.9998654127120972
+Americans are more concerned over Indians fake open source contribution,bert,fake,0.6637450456619263
+Americans are more concerned over Indians fake open source contribution,lstm,fake,0.9998654127120972
+Americans are more concerned over Indians fake open source contribution,bert,fake,0.6637450456619263
+Americans are more concerned over Indians fake open source contribution,lstm,fake,0.9998654127120972
+Americans are more concerned over Indians fake open source contribution,nb,fake,0.594937821077651
+Americans are more concerned over Indians fake open source contribution,bert,fake,0.6637450456619263
+Americans are more concerned over Indians fake open source contribution,lstm,fake,0.9998654127120972
+Senator-elect Jones not joining calls for Trump resignation,lstm,fake,0.9741441607475281
+Senator-elect Jones not joining calls for Trump resignation,bert,fake,0.5319233536720276
+Senator-elect Jones not joining calls for Trump resignation,lstm,fake,0.9741441607475281
+Senator-elect Jones not joining calls for Trump resignation,best,fake,0.87
+Senator-elect Jones not joining calls for Trump resignation,lstm,fake,0.9741441607475281

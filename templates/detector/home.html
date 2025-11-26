@@ -6,6 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Fake News Detection</title>
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <style>
+      body {
+        background-color: var(--bg);
+        background-image: linear-gradient(0deg, rgba(14,22,37,.35), rgba(14,22,37,.35)), url("{% static 'img/bg-imghome.jpg' %}");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+      }
+    </style>
   </head>
   <body>
     <header class="site-header">
@@ -18,26 +27,91 @@
       </div>
     </header>
     <main class="container">
+      <section class="card hero">
+        <h2 class="hero-title">Detect Fake News</h2>
+        <p class="hero-subtitle">Paste a paragraph, select a model, and get instant insights.</p>
+      </section>
       <section class="card">
         <h2 class="card-title">Analyze News Text</h2>
-        <p class="muted">Paste a news paragraph and choose a model to evaluate it.</p>
-        <label class="field-label" for="text">Text</label>
-        <textarea class="input" id="text" placeholder="Paste news text here..."></textarea>
-        <div class="controls">
-          <div class="select-wrap">
-            <label class="field-label" for="model">Model</label>
-            <select class="select" id="model">
-              <option value="best">Best (default)</option>
-              <option value="nb">Naïve Bayes</option>
-              <option value="rf">Random Forest</option>
-              <option value="svm">SVM</option>
-              <option value="lstm">LSTM</option>
-              <option value="bert">BERT</option>
-            </select>
+        <div class="form-grid">
+          <div>
+            <label class="field-label" for="text">Text</label>
+            <textarea class="input" id="text" placeholder="Paste news text here..."></textarea>
           </div>
-          <button class="btn primary" id="predict">Predict</button>
+          <div>
+            <div class="select-wrap">
+              <label class="field-label" for="model">Model</label>
+              <select class="select" id="model">
+                <option value="best">Best (default)</option>
+                <option value="nb">Naïve Bayes</option>
+                <option value="rf">Random Forest</option>
+                <option value="svm">SVM</option>
+                <option value="lstm">LSTM</option>
+                <option value="bert">BERT</option>
+              </select>
+            </div>
+            <button class="btn primary" id="predict" style="margin-top:0.75rem;">Predict</button>
+          </div>
         </div>
         <div class="result" id="result"></div>
+      </section>
+      <section class="card">
+        <h2 class="card-title">Your Search History</h2>
+        {% with visible_list=page_obj.object_list|slice:":5" rest_list=page_obj.object_list|slice:"5:" %}
+        <div id="history">
+          {% for search in visible_list %}
+            <div class="history-row" style="margin-bottom: 12px;">
+              <div class="row-meta">
+                <div class="muted">{{ search.created_at|date:"Y-m-d H:i" }}</div>
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                  <span class="{% if search.label == 'fake' %}badge danger{% else %}badge success{% endif %}">{{ search.label|upper }}</span>
+                  <span class="metric">{{ search.score_pct }}%</span>
+                  <span class="metric">{{ search.model|upper }}</span>
+                </div>
+              </div>
+              <div class="row-snippet">{{ search.text }}</div>
+            </div>
+          {% empty %}
+            <p class="muted">No search history yet.</p>
+          {% endfor %}
+        </div>
+        {% if rest_list %}
+          <div id="history-more" style="display:none;">
+            {% for search in rest_list %}
+              <div class="history-row" style="margin-bottom: 12px;">
+                <div class="row-meta">
+                  <div class="muted">{{ search.created_at|date:"Y-m-d H:i" }}</div>
+                  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                    <span class="{% if search.label == 'fake' %}badge danger{% else %}badge success{% endif %}">{{ search.label|upper }}</span>
+                    <span class="metric">{{ search.score_pct }}%</span>
+                    <span class="metric">{{ search.model|upper }}</span>
+                  </div>
+                </div>
+                <div class="row-snippet">{{ search.text }}</div>
+              </div>
+            {% endfor %}
+          </div>
+          <button class="btn" id="see-more">See more</button>
+        {% endif %}
+        {% endwith %}
+
+        <div class="pagination">
+          <span class="step-links">
+            {% if page_obj.has_previous %}
+              <a href="?page=1">&laquo; first</a>
+              <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+              Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+              <a href="?page={{ page_obj.next_page_number }}">next</a>
+              <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+          </span>
+        </div>
       </section>
     </main>
     <footer class="site-footer">
@@ -51,6 +125,23 @@
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
         if (parts.length === 2) return parts.pop().split(';').shift();
+      }
+      function updateSeeMoreVisibility() {
+        const more = document.getElementById('history-more');
+        const btn = document.getElementById('see-more');
+        if (more && btn) {
+          btn.style.display = more.children.length ? 'inline-block' : 'none';
+        }
+      }
+      const seeMoreBtn = document.getElementById('see-more');
+      if (seeMoreBtn) {
+        seeMoreBtn.addEventListener('click', () => {
+          const more = document.getElementById('history-more');
+          if (more) {
+            more.style.display = 'block';
+            seeMoreBtn.style.display = 'none';
+          }
+        });
       }
       document.getElementById('predict').addEventListener('click', async () => {
         const btn = document.getElementById('predict');
@@ -91,6 +182,39 @@
                 <div><span class="muted">Model</span><div class="metric">${modelText}</div></div>
               </div>
             `;
+
+            const history = document.getElementById('history');
+            if (history) {
+              const item = document.createElement('div');
+              item.className = 'history-row';
+              item.style.marginBottom = '12px';
+              const now = new Date();
+              const y = now.getFullYear();
+              const m = String(now.getMonth() + 1).padStart(2, '0');
+              const d = String(now.getDate()).padStart(2, '0');
+              const hh = String(now.getHours()).padStart(2, '0');
+              const mm = String(now.getMinutes()).padStart(2, '0');
+              const ts = `${y}-${m}-${d} ${hh}:${mm}`;
+              item.innerHTML = `
+                <div class="row-meta">
+                  <div class="muted">${ts}</div>
+                  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                    <span class="${labelClass}">${labelText}</span>
+                    <span class="metric">${scorePct}%</span>
+                    <span class="metric">${modelText}</span>
+                  </div>
+                </div>
+                <div class="row-snippet">${text}</div>
+              `;
+              history.prepend(item);
+              const more = document.getElementById('history-more');
+              if (more) {
+                while (history.children.length > 5) {
+                  more.prepend(history.lastElementChild);
+                }
+                updateSeeMoreVisibility();
+              }
+            }
           }
         } catch (err) {
           resultEl.textContent = 'Network error. Please try again.';
@@ -101,6 +225,4 @@
       });
     </script>
   </body>
-  </html>
-
-
+</html>

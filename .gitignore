@@ -18,3 +18,6 @@ data/models/bert/tf_model.h5
 
 # OS junk
 .DS_Store
+
+# Collected static files
+staticfiles/

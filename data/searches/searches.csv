@@ -406,3 +406,18 @@ Senator-elect Jones not joining calls for Trump resignation,bert,fake,0.53192335
 Senator-elect Jones not joining calls for Trump resignation,lstm,fake,0.9741441607475281
 Senator-elect Jones not joining calls for Trump resignation,best,fake,0.87
 Senator-elect Jones not joining calls for Trump resignation,lstm,fake,0.9741441607475281
+Senator-elect Jones not joining calls for Trump resignation,best,fake,0.87
+Senator-elect Jones not joining calls for Trump resignation,rf,fake,0.87
+Senator-elect Jones not joining calls for Trump resignation,bert,fake,0.5319233536720276
+Trump Just Sent Michelle Obama a Bill She will Never Be able to pay in her lifetime,best,fake,0.89
+Trump Just Sent Michelle Obama a Bill She will Never Be able to pay in her lifetime,bert,fake,0.6393652558326721
+Trump Just Sent Michelle Obama a Bill She will Never Be able to pay in her lifetime,best,fake,0.89
+Trump Just Sent Michelle Obama a Bill She will Never Be able to pay in her lifetime,best,fake,0.89
+Trump Just Sent Michelle Obama a Bill She will Never Be able to pay in her lifetime,best,fake,0.89
+Trump Just Sent Michelle Obama a Bill She will Never Be able to pay in her lifetime,best,fake,0.89
+Trump administration issues new rules on U.S. visa waivers,best,fake,0.83
+Trump administration issues new rules on U.S. visa waivers,nb,real,0.6163718664246818
+Trump administration issues new rules on U.S. visa waivers,rf,fake,0.83
+Trump administration issues new rules on U.S. visa waivers,svm,real,0.5346963043275432
+Trump administration issues new rules on U.S. visa waivers,lstm,fake,0.9560225605964661
+Trump administration issues new rules on U.S. visa waivers,best,fake,0.83

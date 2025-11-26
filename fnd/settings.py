@@ -130,6 +130,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DATA_DIR = BASE_DIR / 'data'
 RAW_DATA_DIR = DATA_DIR / 'raw'

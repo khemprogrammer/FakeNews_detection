@@ -35,10 +35,18 @@ def _reload_predictor():
     return _get_predictor()
 
 
+from django.core.paginator import Paginator
+from .models import Search
+
 @login_required
 @ensure_csrf_cookie
 def home(request: HttpRequest):
-    return render(request, 'detector/home.html')
+    all_searches = Search.objects.filter(user=request.user).order_by('-created_at')
+    paginator = Paginator(all_searches, 10)  # Show 10 searches per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'detector/home.html', {'page_obj': page_obj})
 
 
 @login_required
@@ -78,7 +86,21 @@ def api_predict(request: HttpRequest):
             safe_text = text.replace('\n', ' ').replace('\r', ' ').replace(',', ' ')
             label = result.get('label', 'unknown')
             score = result.get('score', 0.0)
-            f.write(f"{safe_text},{model},{label},{score}\n")
+            actual_model = result.get('model', model)
+            f.write(f"{safe_text},{actual_model},{label},{score}\n")
+
+        # Save search to database for per-user history
+        try:
+            Search.objects.create(
+                user=request.user,
+                text=text,
+                model=model,
+                label=result.get('label', 'unknown'),
+                score=float(result.get('score', 0.0)),
+            )
+        except Exception:
+            # If DB save fails, continue returning prediction result
+            pass
 
         return JsonResponse(result)
     except Exception as e:
